@@ -1,0 +1,15 @@
+---
+const currentPath = Astro.url.pathname;
+const zhPath = currentPath.replace('/en/', '/zh/');
+const enPath = currentPath.replace('/zh/', '/en/');
+---
+<nav class="lang-switcher">
+  <a href={zhPath} class:active={currentPath.includes('/zh/')}>简体中文</a>
+  <span> | </span>
+  <a href={enPath} class:active={currentPath.includes('/en/')}>English</a>
+</nav>
+<style>
+  .lang-switcher { display: flex; gap: 0.5rem; justify-content: center; margin-top: 1rem; }
+  a { text-decoration: none; color: #0066cc; }
+  .active { font-weight: bold; text-decoration: underline; }
+</style>
