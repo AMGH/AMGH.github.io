@@ -1,15 +1,20 @@
+---
+const isEn = Astro.url.pathname.includes('/en/');
+---
 <footer class="footer">
-  <p>&copy; 2026 一个迷你游戏中心 / A Mini Game Hub</p>
-  <p class="operator">运营者 / Operator: <strong>一只萌新65535 / YiZhiMengXin65535</strong></p>
+  <p>&copy; 2026 {isEn ? 'A Mini Game Hub' : '一个迷你游戏中心'}</p>
+  <p class="operator">
+    {isEn ? 'Operator' : '运营者'}: <strong>{isEn ? 'YiZhiMengXin65535' : '一只萌新65535'}</strong>
+  </p>
 </footer>
 <style>
   .footer {
     text-align: center;
     padding: 2rem 0;
     margin-top: 3rem;
-    border-top: 1px solid #eee;
+    border-top: 1px solid #ddd;
     color: #666;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
   }
-  .operator { color: #333; font-weight: 500; }
+  .operator { color: #2c3e50; font-weight: 500; }
 </style>
