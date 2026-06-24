@@ -1,9 +1,12 @@
 ---
-import Footer from '../components/Footer.astro';
-import LangSwitcher from '../components/LangSwitcher.astro';
-
+// src/layouts/Layout.astro
 const { title } = Astro.props;
-const lang = Astro.url.pathname.includes('/en/') ? 'en' : 'zh'; 
+const currentPath = Astro.url.pathname;
+const isEn = currentPath.includes('/en/');
+const lang = isEn ? 'en' : 'zh';
+
+const zhPath = currentPath.replace('/en/', '/zh/');
+const enPath = currentPath.replace('/zh/', '/en/');
 ---
 <!doctype html>
 <html lang={lang}>
@@ -11,25 +14,136 @@ const lang = Astro.url.pathname.includes('/en/') ? 'en' : 'zh';
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{title}</title>
-    <meta name="description" content={lang === 'zh' ? '一个迷你游戏中心' : 'A Mini Game Hub'} />
-    
-    <link rel="alternate" hreflang="zh" href={new URL('/zh/', Astro.site).href} />
-    <link rel="alternate" hreflang="en" href={new URL('/en/', Astro.site).href} />
+    <meta name="description" content={isEn ? 'A Mini Game Hub - A curated collection of fun web mini-games' : '一个迷你游戏中心 - 轻松有趣的网页小游戏合集'} />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Noto+Sans+SC:wght@400;600;800&display=swap" rel="stylesheet">
   </head>
   <body>
-    <header>
-      <h1>{lang === 'zh' ? '一个迷你游戏中心' : 'A Mini Game Hub'}</h1>
-      <LangSwitcher />
-    </header>
-    
-    <main>
-      <slot />
-    </main>
-    
-    <Footer />
+    <div class="app-container">
+      <header class="glass-header">
+        <a href={`/${lang}/`} class="logo">
+          {isEn ? '🎮 Mini Hub' : '🎮 迷你游戏中心'}
+        </a>
+        <nav class="lang-switcher">
+          <a href={zhPath} class:active={!isEn}>中文</a>
+          <span class="divider">/</span>
+          <a href={enPath} class:active={isEn}>EN</a>
+        </nav>
+      </header>
+      
+      <main class="fade-in">
+        <slot />
+      </main>
+      
+      <footer class="glass-footer">
+        <p>&copy; 2026 {isEn ? 'A Mini Game Hub' : '一个迷你游戏中心'}</p>
+        <p class="operator">
+          {isEn ? 'Operator' : '运营者'}: <strong>{isEn ? 'YiZhiMengXin65535' : '一只萌新65535'}</strong>
+        </p>
+      </footer>
+    </div>
   </body>
 </html>
-<style>
-  body { font-family: system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
-  header { text-align: center; margin-bottom: 2rem; }
+
+<style is:global>
+  :root {
+    --bg-color: #0f172a; /* 深邃蓝黑 */
+    --surface-color: rgba(30, 41, 59, 0.6); /* 毛玻璃底色 */
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --accent: #38bdf8; /* 霓虹蓝 */
+    --danger: #f43f5e; /* 霓虹红 */
+    --success: #10b981; /* 荧光绿 */
+    --warning: #f59e0b;
+    --radius: 16px;
+    --font-sans: 'Inter', 'Noto Sans SC', system-ui, sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font-sans);
+    background-color: var(--bg-color);
+    /* 背景渐变光晕 */
+    background-image: 
+      radial-gradient(at 0% 0%, rgba(56, 189, 248, 0.15) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, rgba(244, 63, 94, 0.15) 0px, transparent 50%);
+    color: var(--text-primary);
+    min-height: 100vh;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* 自定义滚动条 */
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+
+  .app-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  /* 毛玻璃 Header */
+  .glass-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    background: var(--surface-color);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: var(--radius);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 3rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    position: sticky;
+    top: 1rem;
+    z-index: 100;
+  }
+
+  .logo {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    text-decoration: none;
+    letter-spacing: -0.02em;
+  }
+
+  .lang-switcher { display: flex; align-items: center; gap: 0.5rem; font-weight: 600; }
+  .lang-switcher a {
+    color: var(--text-secondary); text-decoration: none; padding: 0.25rem 0.75rem;
+    border-radius: 8px; transition: all 0.2s ease; font-size: 0.9rem;
+  }
+  .lang-switcher a:hover { color: var(--text-primary); }
+  .lang-switcher a.active { color: var(--bg-color); background: var(--accent); }
+  .divider { color: var(--text-secondary); opacity: 0.3; }
+
+  /* 全局动画 */
+  .fade-in { animation: fadeIn 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; flex: 1; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* 震动动画 (用于游戏报错) */
+  .shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+  @keyframes shake { 10%, 90% { transform: translate3d(-1px, 0, 0); } 20%, 80% { transform: translate3d(2px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 40%, 60% { transform: translate3d(4px, 0, 0); } }
+
+  /* Footer */
+  .glass-footer {
+    margin-top: 4rem; padding: 2rem 0; border-top: 1px solid rgba(255, 255, 255, 0.05);
+    text-align: center; color: var(--text-secondary); font-size: 0.85rem;
+  }
+  .operator { margin-top: 0.5rem; color: var(--text-primary); font-weight: 500; }
+  
+  /* 通用返回链接 */
+  .back-link {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    color: var(--text-secondary); text-decoration: none; margin-bottom: 2rem;
+    font-weight: 600; transition: color 0.2s;
+  }
+  .back-link:hover { color: var(--accent); }
 </style>

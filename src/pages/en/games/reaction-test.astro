@@ -1,0 +1,141 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+---
+<Layout title="Reaction Test | A Mini Game Hub">
+  <a href="/en/" class="back-link">&larr; Back to Hub</a>
+  <div class="game-panel">
+    <h2>⚡ Reaction Test</h2>
+    <p id="instruction" class="instruction">Click as soon as the screen turns <strong>GREEN</strong>!</p>
+    <div id="box" class="reaction-box">
+      <span id="box-text">Click here to start</span>
+    </div>
+  </div>
+
+  <div id="resultModal" class="modal-overlay">
+    <div class="modal-content">
+      <h3 class="modal-title">Test Result</h3>
+      <div class="rank-badge">S</div>
+      <p class="rank-desc">Lightning Reflexes!</p>
+      <p class="result-stats"></p>
+      <button id="restartBtn" class="restart-btn">Test Again</button>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  const box = document.getElementById('box');
+  const boxText = document.getElementById('box-text');
+  const instruction = document.getElementById('instruction');
+  const modal = document.getElementById('resultModal');
+  const restartBtn = document.getElementById('restartBtn');
+  
+  let state = 'idle'; let timeoutId; let startTime;
+
+  const showResult = (time) => {
+    let rank, desc, rankClass;
+    if (time < 200) { rank = 'S'; desc = 'Lightning Reflexes!'; rankClass = 'rank-S'; }
+    else if (time <= 250) { rank = 'A'; desc = 'Extremely Agile!'; rankClass = 'rank-A'; }
+    else if (time <= 300) { rank = 'B'; desc = 'Very Fast!'; rankClass = 'rank-B'; }
+    else if (time <= 400) { rank = 'C'; desc = 'Average.'; rankClass = 'rank-C'; }
+    else { rank = 'D'; desc = 'Distracted?'; rankClass = 'rank-D'; }
+
+    modal.querySelector('.rank-badge').textContent = rank;
+    modal.querySelector('.rank-badge').className = `rank-badge ${rankClass}`;
+    modal.querySelector('.rank-desc').textContent = desc;
+    modal.querySelector('.result-stats').textContent = `Reaction Time: ${time} ms`;
+    
+    setTimeout(() => modal.classList.add('show'), 300);
+  };
+
+  const restartGame = () => {
+    state = 'idle';
+    box.style.background = 'rgba(255,255,255,0.05)';
+    boxText.textContent = 'Click here to start';
+    instruction.innerHTML = 'Click as soon as the screen turns <strong>GREEN</strong>!';
+    modal.classList.remove('show');
+  };
+
+  box.addEventListener('click', () => {
+    if (modal.classList.contains('show')) return;
+
+    if (state === 'idle' || state === 'result') {
+      state = 'waiting';
+      box.style.background = 'var(--danger)';
+      boxText.textContent = 'Wait for green...';
+      instruction.textContent = "Don't click! Wait for green!";
+      
+      const delay = Math.random() * 3000 + 2000; 
+      timeoutId = setTimeout(() => {
+        state = 'ready';
+        box.style.background = 'var(--success)';
+        boxText.textContent = 'CLICK!!!';
+        instruction.textContent = 'Now!';
+        startTime = Date.now();
+      }, delay);
+    } else if (state === 'waiting') {
+      clearTimeout(timeoutId);
+      state = 'idle';
+      box.style.background = 'rgba(255,255,255,0.05)';
+      boxText.textContent = 'Too soon! Click to retry';
+      instruction.textContent = 'You clicked too early. Try again.';
+    } else if (state === 'ready') {
+      const reactionTime = Date.now() - startTime;
+      state = 'result';
+      box.style.background = 'var(--accent)';
+      boxText.textContent = `${reactionTime} ms`;
+      instruction.textContent = `Test complete.`;
+      showResult(reactionTime);
+    }
+  });
+
+  restartBtn.addEventListener('click', restartGame);
+</script>
+
+<style>
+  .game-panel { text-align: center; max-width: 600px; margin: 0 auto; }
+  h2 { font-size: 2rem; margin-bottom: 1rem; }
+  .instruction { color: var(--text-secondary); margin-bottom: 2rem; font-size: 1.1rem; transition: all 0.3s; }
+  
+  .reaction-box {
+    width: 100%; height: 350px; background: rgba(255,255,255,0.05); border-radius: var(--radius); 
+    display: flex; align-items: center; justify-content: center; 
+    font-size: 2.5rem; font-weight: 800; color: white; cursor: pointer;
+    user-select: none; transition: background 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+  }
+  .reaction-box:active { transform: scale(0.98); }
+
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(12px);
+    display: flex; align-items: center; justify-content: center; z-index: 1000;
+    opacity: 0; pointer-events: none; transition: opacity 0.4s ease;
+  }
+  .modal-overlay.show { opacity: 1; pointer-events: all; }
+  
+  .modal-content {
+    background: var(--surface-color); border: 1px solid rgba(255,255,255,0.15);
+    padding: 3rem 2rem; border-radius: var(--radius); text-align: center;
+    transform: scale(0.8) translateY(20px); transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    max-width: 360px; width: 90%; box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+  }
+  .modal-overlay.show .modal-content { transform: scale(1) translateY(0); }
+  
+  .modal-title { font-size: 1.2rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 1rem; }
+  
+  .rank-badge {
+    font-size: 6rem; font-weight: 900; line-height: 1; margin: 1rem 0;
+    text-shadow: 0 0 30px currentColor; animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+  
+  .rank-S { color: #fbbf24; } .rank-A { color: #a855f7; } .rank-B { color: #38bdf8; } .rank-C { color: #10b981; } .rank-D { color: #94a3b8; }
+  
+  .rank-desc { font-size: 1.25rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.5rem; }
+  .result-stats { color: var(--text-secondary); margin-bottom: 2rem; font-size: 1.1rem; }
+  
+  .restart-btn {
+    padding: 0.8rem 2rem; font-size: 1rem; background: var(--accent); color: var(--bg-color);
+    border: none; border-radius: 12px; cursor: pointer; font-weight: 700; transition: transform 0.2s, opacity 0.2s;
+  }
+  .restart-btn:hover { transform: translateY(-2px); opacity: 0.9; }
+</style>
