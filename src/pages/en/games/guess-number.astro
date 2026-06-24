@@ -4,7 +4,7 @@ import Layout from '../../../layouts/Layout.astro';
 <Layout title="Guess the Number | A Mini Game Hub">
   <a href="/en/" class="back-link">&larr; Back to Hub</a>
   <div class="game-panel">
-    <h2>🎲 Guess the Number <span class="badge">1-100</span></h2>
+    <h2>Guess the Number <span class="badge">1-100</span></h2>
     <p id="message" class="msg">I'm thinking of a number. Can you guess it?</p>
     
     <div class="input-group">
@@ -72,11 +72,13 @@ import Layout from '../../../layouts/Layout.astro';
   };
 
   const checkGuess = () => {
+    window.SoundFX.click(); 
     const val = parseInt(input.value);
     if (isNaN(val) || val < 1 || val > 100) {
-      msg.textContent = 'Please enter a valid number between 1 and 100!';
+      msg.textContent = 'Please enter a valid number (1-100)!';
       msg.style.color = 'var(--danger)';
       input.classList.add('shake');
+      window.SoundFX.error(); 
       setTimeout(() => input.classList.remove('shake'), 500);
       return;
     }
@@ -88,19 +90,22 @@ import Layout from '../../../layouts/Layout.astro';
       msg.style.color = 'var(--success)';
       btn.disabled = true; input.disabled = true;
       btn.textContent = 'Game Over';
+      window.SoundFX.success(); 
       showResult();
     } else if (val < target) {
       msg.textContent = '📈 Too low, guess higher!';
       msg.style.color = 'var(--warning)';
+      window.SoundFX.error(); 
     } else {
       msg.textContent = '📉 Too high, guess lower!';
       msg.style.color = 'var(--warning)';
+      window.SoundFX.error(); 
     }
   };
 
   btn.addEventListener('click', checkGuess);
   input.addEventListener('keypress', (e) => { if(e.key === 'Enter') checkGuess(); });
-  restartBtn.addEventListener('click', restartGame);
+  restartBtn.addEventListener('click', () => { window.SoundFX.click(); restartGame(); });
 </script>
 
 <style>
@@ -109,9 +114,10 @@ import Layout from '../../../layouts/Layout.astro';
     padding: 3rem 2rem; border-radius: var(--radius); text-align: center;
     border: 1px solid rgba(255,255,255,0.1); max-width: 500px; margin: 0 auto;
   }
-  h2 { font-size: 2rem; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: center; gap: 1rem; }
-  .badge { font-size: 0.8rem; background: rgba(56, 189, 248, 0.2); color: var(--accent); padding: 0.25rem 0.75rem; border-radius: 99px; font-weight: 600; }
-  .msg { font-size: 1.2rem; min-height: 2rem; font-weight: 500; margin-bottom: 2rem; transition: color 0.3s; }
+  h2 { font-size: 1.8rem; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: center; gap: 1rem; letter-spacing: -0.02em; }
+  /* 英文排版优化：Badge 样式调整 */
+  .badge { font-size: 0.75rem; background: rgba(56, 189, 248, 0.2); color: var(--accent); padding: 0.3rem 0.8rem; border-radius: 99px; font-weight: 700; letter-spacing: 0.05em; }
+  .msg { font-size: 1.1rem; min-height: 2rem; font-weight: 500; margin-bottom: 2rem; transition: color 0.3s; line-height: 1.5; }
   
   .input-group { display: flex; gap: 1rem; justify-content: center; margin-bottom: 2rem; }
   input {
@@ -120,15 +126,16 @@ import Layout from '../../../layouts/Layout.astro';
     color: white; font-weight: 600; outline: none; transition: border-color 0.2s;
   }
   input:focus { border-color: var(--accent); }
+  /* 英文排版优化：按钮增加内边距和字间距 */
   button {
-    padding: 0 1.5rem; font-size: 1rem; background: var(--accent); color: var(--bg-color);
-    border: none; border-radius: 12px; cursor: pointer; font-weight: 700; transition: opacity 0.2s;
+    padding: 0 1.8rem; font-size: 0.95rem; background: var(--accent); color: var(--bg-color);
+    border: none; border-radius: 12px; cursor: pointer; font-weight: 700; transition: opacity 0.2s; letter-spacing: 0.03em;
   }
   button:disabled { opacity: 0.5; cursor: not-allowed; }
   
   .stats { display: flex; justify-content: center; gap: 2rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1.5rem; }
   .stat-item { display: flex; flex-direction: column; }
-  .stat-label { font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; }
+  .stat-label { font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; }
   .stat-value { font-size: 1.5rem; font-weight: 800; color: var(--accent); }
 
   .modal-overlay {
@@ -146,7 +153,7 @@ import Layout from '../../../layouts/Layout.astro';
   }
   .modal-overlay.show .modal-content { transform: scale(1) translateY(0); }
   
-  .modal-title { font-size: 1.2rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 1rem; }
+  .modal-title { font-size: 1rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 1rem; font-weight: 700; }
   
   .rank-badge {
     font-size: 6rem; font-weight: 900; line-height: 1; margin: 1rem 0;
@@ -156,12 +163,12 @@ import Layout from '../../../layouts/Layout.astro';
   
   .rank-S { color: #fbbf24; } .rank-A { color: #a855f7; } .rank-B { color: #38bdf8; } .rank-C { color: #10b981; } .rank-D { color: #94a3b8; }
   
-  .rank-desc { font-size: 1.25rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.5rem; }
-  .result-stats { color: var(--text-secondary); margin-bottom: 2rem; }
+  .rank-desc { font-size: 1.25rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.5rem; letter-spacing: -0.01em; }
+  .result-stats { color: var(--text-secondary); margin-bottom: 2rem; font-size: 0.95rem; }
   
   .restart-btn {
-    padding: 0.8rem 2rem; font-size: 1rem; background: var(--accent); color: var(--bg-color);
-    border: none; border-radius: 12px; cursor: pointer; font-weight: 700; transition: transform 0.2s, opacity 0.2s;
+    padding: 0.8rem 2rem; font-size: 0.95rem; background: var(--accent); color: var(--bg-color);
+    border: none; border-radius: 12px; cursor: pointer; font-weight: 700; transition: transform 0.2s, opacity 0.2s; letter-spacing: 0.03em;
   }
   .restart-btn:hover { transform: translateY(-2px); opacity: 0.9; }
 </style>

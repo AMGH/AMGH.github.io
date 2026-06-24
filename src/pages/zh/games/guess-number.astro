@@ -44,40 +44,44 @@ import Layout from '../../../layouts/Layout.astro';
 
   const showResult = () => {
     let rank, desc, rankClass;
-    if (attempts <= 3) { rank = 'S'; desc = '天才直觉！'; rankClass = 'rank-S'; }
-    else if (attempts <= 5) { rank = 'A'; desc = '逻辑大师！'; rankClass = 'rank-A'; }
-    else if (attempts <= 7) { rank = 'B'; desc = '表现不错！'; rankClass = 'rank-B'; }
-    else if (attempts <= 9) { rank = 'C'; desc = '勉强及格。'; rankClass = 'rank-C'; }
-    else { rank = 'D'; desc = '再接再厉！'; rankClass = 'rank-D'; }
+    if (attempts <= 3) { rank = 'S'; desc = isEn ? 'Genius Intuition!' : '天才直觉！'; rankClass = 'rank-S'; }
+    else if (attempts <= 5) { rank = 'A'; desc = isEn ? 'Logic Master!' : '逻辑大师！'; rankClass = 'rank-A'; }
+    else if (attempts <= 7) { rank = 'B'; desc = isEn ? 'Well Played!' : '表现不错！'; rankClass = 'rank-B'; }
+    else if (attempts <= 9) { rank = 'C'; desc = isEn ? 'Barely Passed.' : '勉强及格。'; rankClass = 'rank-C'; }
+    else { rank = 'D'; desc = isEn ? 'Keep Trying!' : '再接再厉！'; rankClass = 'rank-D'; }
 
     modal.querySelector('.rank-badge').textContent = rank;
     modal.querySelector('.rank-badge').className = `rank-badge ${rankClass}`;
     modal.querySelector('.rank-desc').textContent = desc;
-    modal.querySelector('.result-stats').textContent = `总共尝试: ${attempts} 次`;
+    modal.querySelector('.result-stats').textContent = isEn ? `Total Attempts: ${attempts}` : `总共尝试: ${attempts} 次`;
     
-    setTimeout(() => modal.classList.add('show'), 300); // 延迟弹出，更有仪式感
+    setTimeout(() => modal.classList.add('show'), 300);
   };
 
   const restartGame = () => {
     target = Math.floor(Math.random() * 100) + 1;
     attempts = 0;
     attText.textContent = '0';
-    msg.textContent = '我已经想好了一个数字。你能猜中吗？';
+    msg.textContent = isEn ? "I'm thinking of a number. Can you guess it?" : '我已经想好了一个数字。你能猜中吗？';
     msg.style.color = 'var(--text-primary)';
     input.value = '';
     input.disabled = false;
     btn.disabled = false;
-    btn.textContent = '确认';
+    btn.textContent = isEn ? 'Guess!' : '确认';
     modal.classList.remove('show');
     input.focus();
   };
 
+  const isEn = window.location.pathname.includes('/en/');
+
   const checkGuess = () => {
+    window.SoundFX.click(); // 🔊 按钮点击音效
     const val = parseInt(input.value);
     if (isNaN(val) || val < 1 || val > 100) {
-      msg.textContent = '请输入1到100之间的有效数字！';
+      msg.textContent = isEn ? 'Please enter a valid number between 1 and 100!' : '请输入1到100之间的有效数字！';
       msg.style.color = 'var(--danger)';
       input.classList.add('shake');
+      window.SoundFX.error(); // 🔊 错误音效
       setTimeout(() => input.classList.remove('shake'), 500);
       return;
     }
@@ -85,23 +89,26 @@ import Layout from '../../../layouts/Layout.astro';
     attText.textContent = attempts;
     
     if (val === target) {
-      msg.textContent = `🎉 恭喜你，猜中了！`;
+      msg.textContent = isEn ? `🎉 Congratulations, you got it!` : `🎉 恭喜你，猜中了！`;
       msg.style.color = 'var(--success)';
       btn.disabled = true; input.disabled = true;
-      btn.textContent = '游戏结束';
+      btn.textContent = isEn ? 'Game Over' : '游戏结束';
+      window.SoundFX.success(); // 🔊 胜利音效
       showResult();
     } else if (val < target) {
-      msg.textContent = '📈 太小了，再往大猜一点！';
+      msg.textContent = isEn ? '📈 Too low, guess higher!' : '📈 太小了，再往大猜一点！';
       msg.style.color = 'var(--warning)';
+      window.SoundFX.error(); // 🔊 猜错音效
     } else {
-      msg.textContent = '📉 太大了，往小猜一点！';
+      msg.textContent = isEn ? '📉 Too high, guess lower!' : '📉 太大了，往小猜一点！';
       msg.style.color = 'var(--warning)';
+      window.SoundFX.error(); // 🔊 猜错音效
     }
   };
 
   btn.addEventListener('click', checkGuess);
   input.addEventListener('keypress', (e) => { if(e.key === 'Enter') checkGuess(); });
-  restartBtn.addEventListener('click', restartGame);
+  restartBtn.addEventListener('click', () => { window.SoundFX.click(); restartGame(); });
 </script>
 
 <style>

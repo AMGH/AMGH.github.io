@@ -1,3 +1,128 @@
 ---
-return Astro.redirect('/zh/');
+// src/pages/index.astro - 智能多语言网关
 ---
+<!doctype html>
+<html lang="x-default">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>A Mini Game Hub / 一个迷你游戏中心</title>
+    <meta name="description" content="Select your language / 选择您的语言" />
+    
+    <!-- 🌟 SEO 核心：告诉搜索引擎这是多语言入口 -->
+    <link rel="alternate" hreflang="zh" href="/zh/" />
+    <link rel="alternate" hreflang="en" href="/en/" />
+    <link rel="alternate" hreflang="x-default" href="/" />
+
+    <!-- ⚡ 智能路由脚本：根据浏览器语言瞬间跳转 (is:inline 确保不被 Astro 打包延迟) -->
+    <script is:inline>
+      (function() {
+        try {
+          const lang = navigator.language || navigator.userLanguage || 'zh';
+          if (lang.toLowerCase().startsWith('zh')) {
+            window.location.replace('/zh/');
+          } else {
+            window.location.replace('/en/');
+          }
+        } catch (e) {
+          // 如果获取语言失败，默认停留在当前页面让用户手动选
+        }
+      })();
+    </script>
+    
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body {
+        background: #0f172a;
+        color: #f8fafc;
+        font-family: 'Courier New', Courier, monospace;
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 2rem;
+        overflow: hidden;
+      }
+      
+      /* 背景光晕 */
+      body::before {
+        content: '';
+        position: absolute;
+        width: 400px; height: 400px;
+        background: radial-gradient(circle, rgba(56, 189, 248, 0.15) 0%, transparent 70%);
+        top: -100px; left: -100px;
+        z-index: -1;
+      }
+      body::after {
+        content: '';
+        position: absolute;
+        width: 400px; height: 400px;
+        background: radial-gradient(circle, rgba(244, 63, 94, 0.15) 0%, transparent 70%);
+        bottom: -100px; right: -100px;
+        z-index: -1;
+      }
+
+      h1 {
+        font-size: clamp(1.5rem, 5vw, 2.5rem);
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: #38bdf8;
+        text-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
+        text-align: center;
+      }
+      
+      .links { 
+        display: flex; 
+        gap: 1.5rem; 
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+      
+      a {
+        padding: 1rem 2.5rem;
+        border: 1px solid #334155;
+        color: #f8fafc;
+        text-decoration: none;
+        font-size: 1.1rem;
+        font-weight: bold;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        background: rgba(30, 41, 59, 0.5);
+        backdrop-filter: blur(8px);
+      }
+      
+      a:hover {
+        background: #38bdf8;
+        color: #0f172a;
+        border-color: #38bdf8;
+        box-shadow: 0 0 20px rgba(56, 189, 248, 0.5);
+        transform: translateY(-2px);
+      }
+      
+      .hint { 
+        color: #64748b; 
+        font-size: 0.75rem; 
+        margin-top: 1rem; 
+        text-align: center;
+        opacity: 0.8;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- 兜底 UI：如果 JS 被禁用 (Noscript模式)，或者跳转失败，用户会看到这个极具设计感的网关 -->
+    <h1>🎮 Select Language / 选择语言</h1>
+    <div class="links">
+      <a href="/zh/">简体中文</a>
+      <a href="/en/">English</a>
+    </div>
+    <p class="hint">[ SYSTEM READY ] - 自动识别浏览器语言中...</p>
+    
+    <noscript>
+      <style>
+        .hint { display: none; }
+        .ns-warn { color: #f43f5e; font-size: 0.8rem; margin-top: 1rem; text-align: center; border: 1px dashed #f43f5e; padding: 0.5rem; }
+      </style>
+      <p class="ns-warn">⚠️ 检测到 JavaScript 已禁用 (Strict Mode)。请手动选择语言。</p>
+    </noscript>
+  </body>
+</html>

@@ -28,21 +28,22 @@ import Layout from '../../../layouts/Layout.astro';
   const instruction = document.getElementById('instruction');
   const modal = document.getElementById('resultModal');
   const restartBtn = document.getElementById('restartBtn');
+  const isEn = window.location.pathname.includes('/en/');
   
   let state = 'idle'; let timeoutId; let startTime;
 
   const showResult = (time) => {
     let rank, desc, rankClass;
-    if (time < 200) { rank = 'S'; desc = '闪电反射！'; rankClass = 'rank-S'; }
-    else if (time <= 250) { rank = 'A'; desc = '极其敏捷！'; rankClass = 'rank-A'; }
-    else if (time <= 300) { rank = 'B'; desc = '反应很快！'; rankClass = 'rank-B'; }
-    else if (time <= 400) { rank = 'C'; desc = '普通水平。'; rankClass = 'rank-C'; }
-    else { rank = 'D'; desc = '是不是走神了？'; rankClass = 'rank-D'; }
+    if (time < 200) { rank = 'S'; desc = isEn ? 'Lightning Reflexes!' : '闪电反射！'; rankClass = 'rank-S'; }
+    else if (time <= 250) { rank = 'A'; desc = isEn ? 'Extremely Agile!' : '极其敏捷！'; rankClass = 'rank-A'; }
+    else if (time <= 300) { rank = 'B'; desc = isEn ? 'Very Fast!' : '反应很快！'; rankClass = 'rank-B'; }
+    else if (time <= 400) { rank = 'C'; desc = isEn ? 'Average.' : '普通水平。'; rankClass = 'rank-C'; }
+    else { rank = 'D'; desc = isEn ? 'Distracted?' : '是不是走神了？'; rankClass = 'rank-D'; }
 
     modal.querySelector('.rank-badge').textContent = rank;
     modal.querySelector('.rank-badge').className = `rank-badge ${rankClass}`;
     modal.querySelector('.rank-desc').textContent = desc;
-    modal.querySelector('.result-stats').textContent = `反应时间: ${time} ms`;
+    modal.querySelector('.result-stats').textContent = isEn ? `Reaction Time: ${time} ms` : `反应时间: ${time} ms`;
     
     setTimeout(() => modal.classList.add('show'), 300);
   };
@@ -50,45 +51,49 @@ import Layout from '../../../layouts/Layout.astro';
   const restartGame = () => {
     state = 'idle';
     box.style.background = 'rgba(255,255,255,0.05)';
-    boxText.textContent = '点击这里开始';
-    instruction.innerHTML = '当屏幕变成<strong>绿色</strong>时，立刻点击屏幕！';
+    boxText.textContent = isEn ? 'Click here to start' : '点击这里开始';
+    instruction.innerHTML = isEn ? 'Click as soon as the screen turns <strong>GREEN</strong>!' : '当屏幕变成<strong>绿色</strong>时，立刻点击屏幕！';
     modal.classList.remove('show');
   };
 
   box.addEventListener('click', () => {
-    if (modal.classList.contains('show')) return; // 结算时禁用点击
+    if (modal.classList.contains('show')) return; 
 
     if (state === 'idle' || state === 'result') {
+      window.SoundFX.click(); // 🔊 开始音效
       state = 'waiting';
       box.style.background = 'var(--danger)';
-      boxText.textContent = '等待变绿...';
-      instruction.textContent = '不要点！等绿色出现！';
+      boxText.textContent = isEn ? 'Wait for green...' : '等待变绿...';
+      instruction.textContent = isEn ? "Don't click! Wait for green!" : '不要点！等绿色出现！';
       
       const delay = Math.random() * 3000 + 2000; 
       timeoutId = setTimeout(() => {
         state = 'ready';
         box.style.background = 'var(--success)';
-        boxText.textContent = '点击！！！';
-        instruction.textContent = '快！';
+        boxText.textContent = isEn ? 'CLICK!!!' : '点击！！！';
+        instruction.textContent = isEn ? 'Now!' : '快！';
+        window.SoundFX.start(); // 🔊 变绿清脆提示音
         startTime = Date.now();
       }, delay);
     } else if (state === 'waiting') {
       clearTimeout(timeoutId);
       state = 'idle';
       box.style.background = 'rgba(255,255,255,0.05)';
-      boxText.textContent = '太早了！点击重试';
-      instruction.textContent = '你点得太早了，再试一次。';
+      boxText.textContent = isEn ? 'Too soon! Click to retry' : '太早了！点击重试';
+      instruction.textContent = isEn ? 'You clicked too early. Try again.' : '你点得太早了，再试一次。';
+      window.SoundFX.fail(); // 🔊 失败下降音
     } else if (state === 'ready') {
       const reactionTime = Date.now() - startTime;
       state = 'result';
       box.style.background = 'var(--accent)';
       boxText.textContent = `${reactionTime} ms`;
-      instruction.textContent = `测试完成。`;
+      instruction.textContent = isEn ? `Test complete.` : `测试完成。`;
+      window.SoundFX.success(); // 🔊 胜利音效
       showResult(reactionTime);
     }
   });
 
-  restartBtn.addEventListener('click', restartGame);
+  restartBtn.addEventListener('click', () => { window.SoundFX.click(); restartGame(); });
 </script>
 
 <style>

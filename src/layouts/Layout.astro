@@ -14,10 +14,23 @@ const enPath = currentPath.replace('/zh/', '/en/');
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{title}</title>
-    <meta name="description" content={isEn ? 'A Mini Game Hub - A curated collection of fun web mini-games' : '一个迷你游戏中心 - 轻松有趣的网页小游戏合集'} />
+    <meta name="description" content={isEn ? 'A Mini Game Hub' : '一个迷你游戏中心'} />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Noto+Sans+SC:wght@400;600;800&display=swap" rel="stylesheet">
+    
+    <script is:inline>
+      if (localStorage.getItem('strictMode') === 'true') {
+        document.documentElement.classList.add('strict-mode');
+      }
+    </script>
+
+    <noscript>
+      <style>
+        body { background: #0a0a0a !important; color: #e0e0e0 !important; font-family: monospace !important; }
+        * { animation: none !important; transition: none !important; border-radius: 0 !important; }
+      </style>
+    </noscript>
   </head>
   <body>
     <div class="app-container">
@@ -25,11 +38,24 @@ const enPath = currentPath.replace('/zh/', '/en/');
         <a href={`/${lang}/`} class="logo">
           {isEn ? '🎮 Mini Hub' : '🎮 迷你游戏中心'}
         </a>
-        <nav class="lang-switcher">
-          <a href={zhPath} class:active={!isEn}>中文</a>
-          <span class="divider">/</span>
-          <a href={enPath} class:active={isEn}>EN</a>
-        </nav>
+        <div class="header-controls">
+          <!-- 🔊 音效开关 -->
+          <button id="soundToggle" class="icon-btn" title={isEn ? "Toggle Sound" : "音效开关"}>🔊</button>
+          
+          <label class="strict-toggle" title={isEn ? "Noscript Strict Mode" : "Noscript 最严格模式"}>
+            <span class="label-text">Strict</span>
+            <div class="switch">
+              <input type="checkbox" id="strictSwitch">
+              <span class="slider"></span>
+            </div>
+          </label>
+          
+          <nav class="lang-switcher">
+            <a href={zhPath} class:active={!isEn}>中文</a>
+            <span class="divider">/</span>
+            <a href={enPath} class:active={isEn}>EN</a>
+          </nav>
+        </div>
       </header>
       
       <main class="fade-in">
@@ -46,15 +72,103 @@ const enPath = currentPath.replace('/zh/', '/en/');
   </body>
 </html>
 
+<script>
+  // --- Strict Mode 逻辑 ---
+  const strictSwitch = document.getElementById('strictSwitch');
+  const htmlEl = document.documentElement;
+  if (htmlEl.classList.contains('strict-mode')) strictSwitch.checked = true;
+
+  strictSwitch.addEventListener('change', () => {
+    if (strictSwitch.checked) {
+      htmlEl.classList.add('strict-mode');
+      localStorage.setItem('strictMode', 'true');
+    } else {
+      htmlEl.classList.remove('strict-mode');
+      localStorage.setItem('strictMode', 'false');
+    }
+  });
+
+  // --- 🔊 全局 8-bit 音效引擎 (Web Audio API 纯代码合成) ---
+  const AudioContext = window.AudioContext || window.webkitAudioContext;
+  let audioCtx;
+  const initAudio = () => {
+    if (!audioCtx) audioCtx = new AudioContext();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+  };
+  // 浏览器要求必须在第一次用户交互后才能播放声音
+  document.addEventListener('click', initAudio, { once: true });
+  document.addEventListener('touchstart', initAudio, { once: true });
+
+  window.isSoundEnabled = () => localStorage.getItem('soundEnabled') !== 'false';
+  
+  window.SoundFX = {
+    click: () => { // UI 点击
+      if (!audioCtx || !window.isSoundEnabled()) return;
+      const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+      osc.type = 'square'; osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+      gain.gain.setValueAtTime(0.05, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.05);
+      osc.connect(gain); gain.connect(audioCtx.destination); osc.start(); osc.stop(audioCtx.currentTime + 0.05);
+    },
+    error: () => { // 错误/震动
+      if (!audioCtx || !window.isSoundEnabled()) return;
+      const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+      osc.type = 'sawtooth'; osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+      gain.gain.setValueAtTime(0.1, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.2);
+      osc.connect(gain); gain.connect(audioCtx.destination); osc.start(); osc.stop(audioCtx.currentTime + 0.2);
+    },
+    success: () => { // 胜利/猜对 (C5-E5-G5 琶音)
+      if (!audioCtx || !window.isSoundEnabled()) return;
+      [523, 659, 784].forEach((freq, i) => {
+        setTimeout(() => {
+          const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+          osc.type = 'square'; osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+          gain.gain.setValueAtTime(0.1, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.2);
+          osc.connect(gain); gain.connect(audioCtx.destination); osc.start(); osc.stop(audioCtx.currentTime + 0.2);
+        }, i * 100);
+      });
+    },
+    start: () => { // 反应测试变绿
+      if (!audioCtx || !window.isSoundEnabled()) return;
+      const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+      osc.type = 'sine'; osc.frequency.setValueAtTime(1200, audioCtx.currentTime);
+      gain.gain.setValueAtTime(0.1, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.1);
+      osc.connect(gain); gain.connect(audioCtx.destination); osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+    },
+    fail: () => { // 反应测试太早 (下降音)
+      if (!audioCtx || !window.isSoundEnabled()) return;
+      const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+      osc.type = 'sawtooth'; osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.3);
+      gain.gain.setValueAtTime(0.1, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.3);
+      osc.connect(gain); gain.connect(audioCtx.destination); osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+    }
+  };
+
+  // 音效开关 UI 逻辑
+  const soundToggle = document.getElementById('soundToggle');
+  soundToggle.textContent = window.isSoundEnabled() ? '🔊' : '🔇';
+  soundToggle.addEventListener('click', () => {
+    const isEnabled = !window.isSoundEnabled();
+    localStorage.setItem('soundEnabled', isEnabled);
+    soundToggle.textContent = isEnabled ? '🔊' : '🔇';
+    if (isEnabled) window.SoundFX.click();
+  });
+
+  // 给全局 UI 元素绑定点击音效
+  document.querySelectorAll('.lang-switcher a, .strict-toggle, .game-card, .back-link, .restart-btn').forEach(el => {
+    el.addEventListener('click', () => window.SoundFX.click());
+  });
+</script>
+
 <style is:global>
   :root {
-    --bg-color: #0f172a; /* 深邃蓝黑 */
-    --surface-color: rgba(30, 41, 59, 0.6); /* 毛玻璃底色 */
+    --bg-color: #0f172a; 
+    --surface-color: rgba(30, 41, 59, 0.6); 
     --text-primary: #f8fafc;
     --text-secondary: #94a3b8;
-    --accent: #38bdf8; /* 霓虹蓝 */
-    --danger: #f43f5e; /* 霓虹红 */
-    --success: #10b981; /* 荧光绿 */
+    --accent: #38bdf8; 
+    --danger: #f43f5e; 
+    --success: #10b981; 
     --warning: #f59e0b;
     --radius: 16px;
     --font-sans: 'Inter', 'Noto Sans SC', system-ui, sans-serif;
@@ -64,86 +178,71 @@ const enPath = currentPath.replace('/zh/', '/en/');
 
   body {
     font-family: var(--font-sans);
-    background-color: var(--bg-color);
-    /* 背景渐变光晕 */
+    background-color: #0f172a; background-color: var(--bg-color);
     background-image: 
       radial-gradient(at 0% 0%, rgba(56, 189, 248, 0.15) 0px, transparent 50%),
       radial-gradient(at 100% 100%, rgba(244, 63, 94, 0.15) 0px, transparent 50%);
-    color: var(--text-primary);
-    min-height: 100vh;
-    line-height: 1.6;
-    overflow-x: hidden;
+    color: #f8fafc; color: var(--text-primary);
+    min-height: 100vh; line-height: 1.6; overflow-x: hidden;
   }
 
-  /* 自定义滚动条 */
   ::-webkit-scrollbar { width: 8px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
 
-  .app-container {
-    max-width: 900px;
-    margin: 0 auto;
-    padding: 2rem 1.5rem;
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-  }
+  .app-container { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; display: flex; flex-direction: column; min-height: 100vh; }
 
-  /* 毛玻璃 Header */
   .glass-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1rem 1.5rem;
-    background: var(--surface-color);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border-radius: var(--radius);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    margin-bottom: 3rem;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-    position: sticky;
-    top: 1rem;
-    z-index: 100;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 1rem 1.5rem; background: var(--surface-color);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    border-radius: var(--radius); border: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 3rem; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    position: sticky; top: 1rem; z-index: 100;
   }
 
-  .logo {
-    font-size: 1.25rem;
-    font-weight: 800;
-    color: var(--text-primary);
-    text-decoration: none;
-    letter-spacing: -0.02em;
+  .logo { font-size: 1.25rem; font-weight: 800; color: var(--text-primary); text-decoration: none; letter-spacing: -0.02em; }
+  .header-controls { display: flex; align-items: center; gap: 1.5rem; }
+
+  /* 🔊 音效按钮样式 */
+  .icon-btn {
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px; padding: 0.4rem 0.6rem; cursor: pointer; font-size: 1rem;
+    transition: all 0.2s; color: var(--text-primary); line-height: 1;
   }
+  .icon-btn:hover { background: rgba(255,255,255,0.1); transform: scale(1.1); }
+
+  .strict-toggle { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.8rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+  .switch { position: relative; width: 34px; height: 20px; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider { position: absolute; inset: 0; background: #444; border-radius: 20px; transition: .2s; }
+  .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: .2s; }
+  input:checked + .slider { background: var(--success); }
+  input:checked + .slider:before { transform: translateX(14px); }
 
   .lang-switcher { display: flex; align-items: center; gap: 0.5rem; font-weight: 600; }
-  .lang-switcher a {
-    color: var(--text-secondary); text-decoration: none; padding: 0.25rem 0.75rem;
-    border-radius: 8px; transition: all 0.2s ease; font-size: 0.9rem;
-  }
+  .lang-switcher a { color: var(--text-secondary); text-decoration: none; padding: 0.25rem 0.75rem; border-radius: 8px; transition: all 0.2s ease; font-size: 0.9rem; }
   .lang-switcher a:hover { color: var(--text-primary); }
   .lang-switcher a.active { color: var(--bg-color); background: var(--accent); }
   .divider { color: var(--text-secondary); opacity: 0.3; }
 
-  /* 全局动画 */
   .fade-in { animation: fadeIn 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; flex: 1; }
   @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-
-  /* 震动动画 (用于游戏报错) */
   .shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
   @keyframes shake { 10%, 90% { transform: translate3d(-1px, 0, 0); } 20%, 80% { transform: translate3d(2px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 40%, 60% { transform: translate3d(4px, 0, 0); } }
 
-  /* Footer */
-  .glass-footer {
-    margin-top: 4rem; padding: 2rem 0; border-top: 1px solid rgba(255, 255, 255, 0.05);
-    text-align: center; color: var(--text-secondary); font-size: 0.85rem;
-  }
+  .glass-footer { margin-top: 4rem; padding: 2rem 0; border-top: 1px solid rgba(255, 255, 255, 0.05); text-align: center; color: var(--text-secondary); font-size: 0.85rem; }
   .operator { margin-top: 0.5rem; color: var(--text-primary); font-weight: 500; }
-  
-  /* 通用返回链接 */
-  .back-link {
-    display: inline-flex; align-items: center; gap: 0.5rem;
-    color: var(--text-secondary); text-decoration: none; margin-bottom: 2rem;
-    font-weight: 600; transition: color 0.2s;
-  }
+  .back-link { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--text-secondary); text-decoration: none; margin-bottom: 2rem; font-weight: 600; transition: color 0.2s; }
   .back-link:hover { color: var(--accent); }
+
+  /* Strict Mode */
+  html.strict-mode body { background: #0a0a0a !important; background-image: none !important; font-family: 'Courier New', Courier, monospace !important; color: #e0e0e0 !important; }
+  html.strict-mode * { animation: none !important; transition: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; box-shadow: none !important; text-shadow: none !important; border-radius: 0 !important; }
+  html.strict-mode .glass-header, html.strict-mode .glass-footer, html.strict-mode .game-panel, html.strict-mode .game-card { background: #111 !important; border: 1px solid #333 !important; }
+  html.strict-mode .icon-btn { background: #222 !important; border: 1px solid #444 !important; }
+  html.strict-mode .game-card, html.strict-mode .fade-in { opacity: 1 !important; transform: none !important; }
+  html.strict-mode .game-card:hover { transform: none !important; border-color: #fff !important; }
+  html.strict-mode .game-card::before { display: none !important; } 
+  html.strict-mode .gradient-text { background: none !important; -webkit-text-fill-color: #fff !important; }
 </style>
