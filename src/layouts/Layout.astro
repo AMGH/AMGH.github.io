@@ -42,8 +42,8 @@ const enPath = currentPath.replace('/zh/', '/en/');
           <!-- 🔊 音效开关 -->
           <button id="soundToggle" class="icon-btn" title={isEn ? "Toggle Sound" : "音效开关"}>🔊</button>
           
-          <label class="strict-toggle" title={isEn ? "Noscript Strict Mode" : "Noscript 最严格模式"}>
-            <span class="label-text">Strict</span>
+          <label class="strict-toggle" title={isEn ? "Noscript Strict Mode (Minimal/No Animations)" : "Noscript 最严格模式 (极简/无动画/终端风)"}>
+            <span class="label-text">{isEn ? 'NoScript Mode' : 'NoScript 模式'}</span>
             <div class="switch">
               <input type="checkbox" id="strictSwitch">
               <span class="slider"></span>
